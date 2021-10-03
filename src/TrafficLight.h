@@ -24,6 +24,9 @@ template <class T>
 class MessageQueue
 {
 public:
+void send(TrafficLightPhase &&traffic_light_phase);
+TrafficLightPhase receive();
+
 private:
 };
 
@@ -44,7 +47,6 @@ public:
     // typical behaviour methods
     void waitForGreen();
     void simulate();
-    ;
 
 private:
     // typical behaviour methods
