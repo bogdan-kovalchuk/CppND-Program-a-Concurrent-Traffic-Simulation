@@ -24,8 +24,8 @@ template <class T>
 class MessageQueue
 {
 public:
-    void send(TrafficLightPhase &&traffic_light_phase);
-    TrafficLightPhase receive();
+    void send(T &&msg);
+    T receive();
 
 private:
     std::deque<TrafficLightPhase> _queue;
