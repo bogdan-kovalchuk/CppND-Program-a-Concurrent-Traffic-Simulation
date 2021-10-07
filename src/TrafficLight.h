@@ -5,6 +5,7 @@
 #include <deque>
 #include <condition_variable>
 #include <random>
+#include <future>
 #include "TrafficObject.h"
 
 // forward declarations to avoid include cycle
@@ -64,6 +65,7 @@ private:
 
     std::condition_variable _condition;
     std::mutex _mutex;
+    std::shared_ptr<MessageQueue<TrafficLightPhase>> _message_queue;
 };
 
 #endif

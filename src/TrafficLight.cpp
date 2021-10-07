@@ -77,6 +77,13 @@ void TrafficLight::cycleThroughPhases()
                 _currentPhase == TrafficLightPhase::red;
             }
 
+            TrafficLightPhase message = _currentPhase;
+            auto ft = std::async(std::launch::async,
+                                 &MessageQueue<TrafficLightPhase>::send,
+                                 _message_queue,
+                                 std::move(message));
+            ft.wait();
+
             lastUpdate = std::chrono::system_clock::now();
             cycleDuration = distr(gen); // generate time in seconds
         }
