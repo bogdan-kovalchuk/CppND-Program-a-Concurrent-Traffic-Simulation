@@ -4,6 +4,7 @@
 #include <mutex>
 #include <deque>
 #include <condition_variable>
+#include <random>
 #include "TrafficObject.h"
 
 // forward declarations to avoid include cycle
