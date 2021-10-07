@@ -78,7 +78,7 @@ void TrafficLight::cycleThroughPhases()
 
     std::random_device rd;                       // obtain a random number from hardware
     std::mt19937 gen(rd());                      // seed the generator
-    std::uniform_int_distribution<> distr(4, 6); // define the range
+    std::uniform_int_distribution<> distr(4000, 6000); // define the range
 
     double cycleDuration = distr(gen); // generate time in seconds
     std::chrono::time_point<std::chrono::system_clock> lastUpdate;
@@ -88,7 +88,7 @@ void TrafficLight::cycleThroughPhases()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-        long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastUpdate).count();
+        long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - lastUpdate).count();
         if (timeSinceLastUpdate >= cycleDuration)
         {
             if (_currentPhase == TrafficLightPhase::red)
