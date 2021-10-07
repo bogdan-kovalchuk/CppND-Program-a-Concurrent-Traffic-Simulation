@@ -13,7 +13,7 @@ T MessageQueue<T>::receive()
 
     std::unique_lock<std::mutex> uLock(_mtx);
     _cond_var.wait(uLock, [this]
-               { return !_queue.empty(); });
+                   { return !_queue.empty(); });
 
     T msg = std::move(_queue.back());
     _queue.pop_back();
@@ -37,6 +37,7 @@ void MessageQueue<T>::send(T &&msg)
 TrafficLight::TrafficLight()
 {
     _currentPhase = TrafficLightPhase::red;
+    _message_queue = std::make_shared<MessageQueue<TrafficLightPhase>>();
 }
 
 void TrafficLight::waitForGreen()
@@ -64,7 +65,7 @@ void TrafficLight::simulate()
 {
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public
     // method „simulate“ is called. To do this, use the thread queue in the base class.
-    
+
     threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 }
 
@@ -76,8 +77,8 @@ void TrafficLight::cycleThroughPhases()
     // to the message queue using move semantics. The cycle duration should be a random value between 4 and 6 seconds.
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles.
 
-    std::random_device rd;                       // obtain a random number from hardware
-    std::mt19937 gen(rd());                      // seed the generator
+    std::random_device rd;                             // obtain a random number from hardware
+    std::mt19937 gen(rd());                            // seed the generator
     std::uniform_int_distribution<> distr(4000, 6000); // define the range
 
     double cycleDuration = distr(gen); // generate time in seconds
@@ -88,16 +89,16 @@ void TrafficLight::cycleThroughPhases()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-        long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - lastUpdate).count();
+        long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
         if (timeSinceLastUpdate >= cycleDuration)
         {
             if (_currentPhase == TrafficLightPhase::red)
             {
-                _currentPhase == TrafficLightPhase::green;
+                _currentPhase = TrafficLightPhase::green;
             }
             else
             {
-                _currentPhase == TrafficLightPhase::red;
+                _currentPhase = TrafficLightPhase::red;
             }
 
             TrafficLightPhase message = _currentPhase;
