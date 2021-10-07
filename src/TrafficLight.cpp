@@ -18,7 +18,7 @@ T MessageQueue<T>::receive()
     T msg = std::move(_queue.back());
     _queue.pop_back();
 
-    return msg; // will not be copied due to return value optimization (RVO) in C++
+    return msg;
 }
 
 template <typename T>
@@ -64,6 +64,7 @@ void TrafficLight::simulate()
 {
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public
     // method „simulate“ is called. To do this, use the thread queue in the base class.
+    
     threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 }
 
@@ -79,7 +80,7 @@ void TrafficLight::cycleThroughPhases()
     std::mt19937 gen(rd());                      // seed the generator
     std::uniform_int_distribution<> distr(4, 6); // define the range
 
-    double cycleDuration = distr(gen); // // generate time in seconds
+    double cycleDuration = distr(gen); // generate time in seconds
     std::chrono::time_point<std::chrono::system_clock> lastUpdate;
 
     lastUpdate = std::chrono::system_clock::now();
