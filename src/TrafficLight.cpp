@@ -53,8 +53,8 @@ void TrafficLight::cycleThroughPhases()
     // to the message queue using move semantics. The cycle duration should be a random value between 4 and 6 seconds.
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles.
 
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
+    std::random_device rd;                       // obtain a random number from hardware
+    std::mt19937 gen(rd());                      // seed the generator
     std::uniform_int_distribution<> distr(4, 6); // define the range
 
     double cycleDuration = distr(gen); // // generate time in seconds
@@ -68,9 +68,17 @@ void TrafficLight::cycleThroughPhases()
         long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - lastUpdate).count();
         if (timeSinceLastUpdate >= cycleDuration)
         {
+            if (_currentPhase == TrafficLightPhase::red)
+            {
+                _currentPhase == TrafficLightPhase::green;
+            }
+            else
+            {
+                _currentPhase == TrafficLightPhase::red;
+            }
 
             lastUpdate = std::chrono::system_clock::now();
-            cycleDuration = distr(gen); // // generate time in seconds
+            cycleDuration = distr(gen); // generate time in seconds
         }
     }
 }
