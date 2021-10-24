@@ -8,3 +8,6 @@ find_package(Threads REQUIRED)
 
 add_executable(test_message_queue test_message_queue.cpp)
 target_link_libraries(test_message_queue Threads::Threads)
+
+add_executable(test_queue_comparison test_queue_comparison.cpp)
+target_link_libraries(test_queue_comparison Threads::Threads)
