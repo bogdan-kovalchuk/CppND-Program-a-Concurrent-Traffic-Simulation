@@ -4,6 +4,7 @@
 #include <queue>
 #include <condition_variable>
 #include <mutex>
+#include "MessageQueue.h"
 
 template <class T>
 class FifoMessageQueue
@@ -12,6 +13,8 @@ public:
     void send(T &&msg)
     {
         std::lock_guard<std::mutex> lock(_mtx);
+        if (_closed)
+            throw QueueClosedException();
         _queue.push(std::move(msg));
         _cond_var.notify_one();
     }
@@ -19,12 +22,28 @@ public:
     T receive()
     {
         std::unique_lock<std::mutex> lock(_mtx);
-        _cond_var.wait(lock, [this] { return !_queue.empty(); });
+        _cond_var.wait(lock, [this] { return !_queue.empty() || _closed; });
+
+        if (_queue.empty() && _closed)
+            throw QueueClosedException();
 
         T msg = std::move(_queue.front());
         _queue.pop();
 
         return msg;
+    }
+
+    void shutdown()
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+        _closed = true;
+        _cond_var.notify_all();
+    }
+
+    bool is_closed() const
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+        return _closed;
     }
 
     std::size_t size() const
@@ -43,6 +62,7 @@ private:
     std::queue<T> _queue;
     std::condition_variable _cond_var;
     mutable std::mutex _mtx;
+    bool _closed = false;
 };
 
 #endif
