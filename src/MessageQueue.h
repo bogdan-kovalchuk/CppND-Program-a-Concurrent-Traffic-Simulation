@@ -6,6 +6,28 @@
 #include <mutex>
 #include <stdexcept>
 
+// MessageQueue: condition-variable synchronized deque accessed at the back.
+//
+// Approach
+//   std::deque with push_back / back+pop_back under a single mutex.
+//   A condition_variable blocks receivers until an element is available or
+//   the queue is shut down.
+//
+// Ordering: LIFO (most recently sent element is received first).
+//
+// Complexity
+//   send              O(1) amortized   lock + push_back + notify_one
+//   receive           O(1) amortized   wait + back + pop_back
+//   shutdown          O(1)             lock + flag + notify_all
+//   size / empty      O(1)             lock + deque::size
+//
+// Space: O(n) for n queued elements plus one mutex and one condvar.
+//
+// Thread safety: all public methods are safe to call from any thread.
+// shutdown() is idempotent.  After shutdown, send() throws
+// QueueClosedException; receive() drains remaining elements first, then
+// throws QueueClosedException when the queue is empty.
+
 class QueueClosedException : public std::runtime_error
 {
 public:
