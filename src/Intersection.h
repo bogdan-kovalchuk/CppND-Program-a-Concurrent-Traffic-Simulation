@@ -7,6 +7,7 @@
 #include <memory>
 #include "TrafficLight.h"
 #include "TrafficObject.h"
+#include "WorkerState.h"
 
 // forward declarations to avoid include cycle
 class Street;
@@ -45,6 +46,7 @@ public:
     void simulate();
     void vehicleHasLeft(std::shared_ptr<Vehicle> vehicle);
     bool trafficLightIsGreen();
+    void shutdown();
 
 private:
     // typical behaviour methods
@@ -55,6 +57,7 @@ private:
     WaitingVehicles _waitingVehicles;              // list of all vehicles and their associated promises waiting to enter the intersection
     bool _isBlocked;                               // flag indicating wether the intersection is blocked by a vehicle
     TrafficLight _trafficLight;
+    WorkerState _workerState;
 };
 
 #endif
