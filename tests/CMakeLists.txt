@@ -17,3 +17,6 @@ target_link_libraries(test_queue_hardening Threads::Threads)
 
 add_executable(test_worker_state test_worker_state.cpp)
 target_link_libraries(test_worker_state Threads::Threads)
+
+add_executable(test_worker_shutdown test_worker_shutdown.cpp)
+target_link_libraries(test_worker_shutdown Threads::Threads)
