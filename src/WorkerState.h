@@ -2,6 +2,7 @@
 #define WORKER_STATE_H
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
 
