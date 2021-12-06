@@ -20,3 +20,6 @@ target_link_libraries(test_worker_state Threads::Threads)
 
 add_executable(test_worker_shutdown test_worker_shutdown.cpp)
 target_link_libraries(test_worker_shutdown Threads::Threads)
+
+add_executable(test_worker_race_edge_cases test_worker_race_edge_cases.cpp)
+target_link_libraries(test_worker_race_edge_cases Threads::Threads)
