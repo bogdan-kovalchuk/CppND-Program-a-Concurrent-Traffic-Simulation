@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11.3)
+﻿cmake_minimum_required(VERSION 3.11.3)
 project(traffic_sim_tests)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread -Wall -Wextra -Wpedantic")
 
@@ -19,6 +19,10 @@ add_test(NAME queue_comparison COMMAND test_queue_comparison)
 add_executable(test_queue_hardening test_queue_hardening.cpp)
 target_link_libraries(test_queue_hardening Threads::Threads)
 add_test(NAME queue_hardening COMMAND test_queue_hardening)
+
+add_executable(test_queue_sync test_queue_sync.cpp)
+target_link_libraries(test_queue_sync Threads::Threads)
+add_test(NAME queue_sync COMMAND test_queue_sync)
 
 add_executable(test_worker_state test_worker_state.cpp)
 target_link_libraries(test_worker_state Threads::Threads)
