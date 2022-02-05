@@ -24,6 +24,10 @@ add_executable(test_queue_sync test_queue_sync.cpp)
 target_link_libraries(test_queue_sync Threads::Threads)
 add_test(NAME queue_sync COMMAND test_queue_sync)
 
+add_executable(test_shutdown_drain test_shutdown_drain.cpp)
+target_link_libraries(test_shutdown_drain Threads::Threads)
+add_test(NAME shutdown_drain COMMAND test_shutdown_drain)
+
 add_executable(test_worker_state test_worker_state.cpp)
 target_link_libraries(test_worker_state Threads::Threads)
 add_test(NAME worker_state COMMAND test_worker_state)
