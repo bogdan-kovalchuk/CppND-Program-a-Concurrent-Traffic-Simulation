@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <thread>
 #include <vector>
 #include <atomic>
@@ -168,6 +168,33 @@ TEST(test_worker_exits_immediately_if_already_stopped)
     ASSERT_TRUE(elapsed < 50);
 }
 
+TEST(test_restart_wakes_all_sleeping_waiters)
+{
+    WorkerState state;
+    state.stop();
+
+    const int num_waiters = 5;
+    std::atomic<int> woke_up{0};
+
+    std::vector<std::thread> waiters;
+    for (int i = 0; i < num_waiters; ++i)
+    {
+        waiters.emplace_back([&] {
+            state.wait_for_stop(std::chrono::milliseconds(5000));
+            woke_up.fetch_add(1);
+        });
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    state.restart();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    ASSERT_EQ(woke_up.load(), num_waiters);
+
+    state.stop();
+    for (auto &t : waiters) t.join();
+}
+
 int main()
 {
     std::cout << "Worker shutdown race edge case tests:\n";
@@ -179,6 +206,7 @@ int main()
     RUN(test_multiple_waiters_all_wake_on_stop);
     RUN(test_is_running_consistent_with_stop);
     RUN(test_worker_exits_immediately_if_already_stopped);
+    RUN(test_restart_wakes_all_sleeping_waiters);
 
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed > 0 ? 1 : 0;
