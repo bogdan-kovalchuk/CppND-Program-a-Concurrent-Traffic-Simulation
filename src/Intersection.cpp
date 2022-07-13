@@ -129,10 +129,6 @@ void Intersection::processVehicleQueue()
     // continuously process the vehicle queue
     while (_workerState.is_running())
     {
-        // sleep at every iteration to reduce CPU usage
-        _workerState.wait_for_stop(std::chrono::milliseconds(1));
-
-        // only proceed when at least one vehicle is waiting in the queue
         if (_waitingVehicles.getSize() > 0 && !_isBlocked)
         {
             // set intersection to "blocked" to prevent other vehicles from entering
@@ -141,6 +137,8 @@ void Intersection::processVehicleQueue()
             // permit entry to first vehicle in the queue (FIFO)
             _waitingVehicles.permitEntryToFirstInQueue();
         }
+
+        _workerState.wait_for_stop(std::chrono::milliseconds(1));
     }
 }
 
