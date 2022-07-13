@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <thread>
 #include <chrono>
 #include <future>
@@ -28,6 +28,9 @@ void WaitingVehicles::pushBack(std::shared_ptr<Vehicle> vehicle, std::promise<vo
 void WaitingVehicles::permitEntryToFirstInQueue()
 {
     std::lock_guard<std::mutex> lock(_mutex);
+
+    if (_vehicles.empty() || _promises.empty())
+        return;
 
     // get entries from the front of both queues
     auto firstPromise = _promises.begin();
