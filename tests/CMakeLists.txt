@@ -39,3 +39,7 @@ add_test(NAME worker_shutdown COMMAND test_worker_shutdown)
 add_executable(test_worker_race_edge_cases test_worker_race_edge_cases.cpp)
 target_link_libraries(test_worker_race_edge_cases Threads::Threads)
 add_test(NAME worker_race_edge_cases COMMAND test_worker_race_edge_cases)
+
+add_executable(test_worker_lifecycle test_worker_lifecycle.cpp)
+target_link_libraries(test_worker_lifecycle Threads::Threads)
+add_test(NAME worker_lifecycle COMMAND test_worker_lifecycle)
