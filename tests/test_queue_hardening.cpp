@@ -263,6 +263,50 @@ TEST(concurrent_send_during_shutdown_is_safe)
     ASSERT_EQ(send_ok.load() + send_failed.load(), num_senders * 50);
 }
 
+TEST(try_send_returns_false_after_shutdown)
+{
+    MessageQueue<int> q;
+    q.shutdown();
+
+    int v = 1;
+    ASSERT_TRUE(!q.try_send(std::move(v)));
+
+    FifoMessageQueue<int> fq;
+    fq.shutdown();
+    int v2 = 2;
+    ASSERT_TRUE(!fq.try_send(std::move(v2)));
+}
+
+TEST(concurrent_try_send_during_shutdown)
+{
+    FifoMessageQueue<int> q;
+    const int num_senders = 6;
+    std::atomic<int> ok_count{0};
+    std::atomic<int> fail_count{0};
+
+    std::vector<std::thread> senders;
+    for (int s = 0; s < num_senders; ++s)
+    {
+        senders.emplace_back([&] {
+            for (int i = 0; i < 30; ++i)
+            {
+                int v = i;
+                if (q.try_send(std::move(v)))
+                    ok_count.fetch_add(1);
+                else
+                    fail_count.fetch_add(1);
+            }
+        });
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(3));
+    q.shutdown();
+
+    for (auto &t : senders) t.join();
+    ASSERT_EQ(ok_count.load() + fail_count.load(), num_senders * 30);
+    ASSERT_TRUE(ok_count.load() > 0);
+}
+
 int main()
 {
     std::cout << "Queue hardening tests:\n";
@@ -281,6 +325,8 @@ int main()
     RUN(fifo_empty_receive_on_closed_throws);
     RUN(fifo_drain_ordering_under_shutdown);
     RUN(concurrent_send_during_shutdown_is_safe);
+    RUN(try_send_returns_false_after_shutdown);
+    RUN(concurrent_try_send_during_shutdown);
 
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed > 0 ? 1 : 0;
