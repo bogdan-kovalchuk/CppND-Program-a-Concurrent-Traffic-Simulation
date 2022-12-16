@@ -2,6 +2,7 @@
 #define MESSAGE_QUEUE_H
 
 #include <deque>
+#include <vector>
 #include <condition_variable>
 #include <mutex>
 #include <stdexcept>
@@ -47,6 +48,19 @@ public:
         _queue.pop_back();
 
         return msg;
+    }
+
+    std::vector<T> drain()
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+        std::vector<T> result;
+        result.reserve(_queue.size());
+        while (!_queue.empty())
+        {
+            result.push_back(std::move(_queue.back()));
+            _queue.pop_back();
+        }
+        return result;
     }
 
     void shutdown()
