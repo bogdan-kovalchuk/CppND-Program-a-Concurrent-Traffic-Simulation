@@ -1,7 +1,7 @@
 #ifndef TRAFFICLIGHT_H
 #define TRAFFICLIGHT_H
 
-#include <mutex>
+#include <atomic>
 #include <random>
 #include <future>
 #include "TrafficObject.h"
@@ -32,10 +32,8 @@ public:
 private:
     // typical behaviour methods
     void cycleThroughPhases();
-    TrafficLightPhase _currentPhase;
+    std::atomic<TrafficLightPhase> _currentPhase;
 
-    std::condition_variable _condition;
-    std::mutex _mutex;
     std::shared_ptr<MessageQueue<TrafficLightPhase>> _message_queue;
 };
 
