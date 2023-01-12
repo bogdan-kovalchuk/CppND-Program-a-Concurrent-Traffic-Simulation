@@ -6,6 +6,7 @@
 #include <future>
 #include "TrafficObject.h"
 #include "MessageQueue.h"
+#include "WorkerState.h"
 
 // forward declarations to avoid include cycle
 class Vehicle;
@@ -28,6 +29,7 @@ public:
     // typical behaviour methods
     void waitForGreen();
     void simulate();
+    void shutdown();
 
 private:
     // typical behaviour methods
@@ -35,6 +37,7 @@ private:
     std::atomic<TrafficLightPhase> _currentPhase;
 
     std::shared_ptr<MessageQueue<TrafficLightPhase>> _message_queue;
+    WorkerState _workerState;
 };
 
 #endif

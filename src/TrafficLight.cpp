@@ -31,6 +31,11 @@ void TrafficLight::simulate()
     threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 }
 
+void TrafficLight::shutdown()
+{
+    _workerState.stop();
+}
+
 void TrafficLight::cycleThroughPhases()
 {
     std::random_device rd;
@@ -41,9 +46,9 @@ void TrafficLight::cycleThroughPhases()
     std::chrono::time_point<std::chrono::system_clock> lastUpdate;
 
     lastUpdate = std::chrono::system_clock::now();
-    while (true)
+    while (_workerState.is_running())
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        _workerState.wait_for_stop(std::chrono::milliseconds(1));
 
         long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
         if (timeSinceLastUpdate >= cycleDuration)
