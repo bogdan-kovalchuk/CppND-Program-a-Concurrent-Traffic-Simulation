@@ -29,9 +29,15 @@ TEST(test_worker_resumes_after_restart)
 {
     WorkerState state;
     std::atomic<int> work_count{0};
+    // Explicit termination flag: the worker must survive the intermediate
+    // stop() (to prove it resumes on restart()), so it cannot exit on
+    // is_running() alone. It also must not depend on reaching a specific
+    // work_count, since that value is timing-dependent and the loop would
+    // spin forever after the final stop() if the target were never reached.
+    std::atomic<bool> done{false};
 
     std::thread worker([&] {
-        while (work_count.load() < 20)
+        while (!done.load())
         {
             if (state.is_running())
             {
@@ -49,6 +55,7 @@ TEST(test_worker_resumes_after_restart)
     state.restart();
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     state.stop();
+    done.store(true);
     worker.join();
 
     ASSERT_TRUE(work_count.load() > paused_count);
