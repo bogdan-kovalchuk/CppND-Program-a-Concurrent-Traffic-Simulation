@@ -28,6 +28,11 @@ void Vehicle::simulate()
     threads.emplace_back(std::thread(&Vehicle::drive, this));
 }
 
+void Vehicle::shutdown()
+{
+    _workerState.stop();
+}
+
 // virtual function which is executed in a thread
 void Vehicle::drive()
 {
@@ -43,10 +48,10 @@ void Vehicle::drive()
 
     // init stop watch
     lastUpdate = std::chrono::system_clock::now();
-    while (true)
+    while (_workerState.is_running())
     {
         // sleep at every iteration to reduce CPU usage
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        _workerState.wait_for_stop(std::chrono::milliseconds(1));
 
         // compute time difference to stop watch
         long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();

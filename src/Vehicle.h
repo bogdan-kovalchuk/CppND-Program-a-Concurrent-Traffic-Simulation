@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "TrafficObject.h"
+#include "WorkerState.h"
 
 // forward declarations to avoid include cycle
 class Street;
@@ -20,6 +21,7 @@ public:
 
     // typical behaviour methods
     void simulate();
+    void shutdown();
 
     // miscellaneous
     std::shared_ptr<Vehicle> get_shared_this() { return shared_from_this(); }
@@ -32,6 +34,7 @@ private:
     std::shared_ptr<Intersection> _currDestination; // destination to which the vehicle is currently driving
     double _posStreet;                              // position on current street
     double _speed;                                  // ego speed in m/s
+    WorkerState _workerState;
 };
 
 #endif
