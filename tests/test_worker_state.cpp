@@ -169,32 +169,40 @@ TEST(test_memory_ordering_under_contention)
 {
     WorkerState state;
     const int num_readers = 8;
+    const int iterations_per_reader = 20000;
     std::atomic<int> saw_running{0};
     std::atomic<int> saw_stopped{0};
+    std::atomic<int> observations{0};
 
     std::vector<std::thread> readers;
     for (int r = 0; r < num_readers; ++r)
     {
         readers.emplace_back([&] {
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < iterations_per_reader; ++i)
             {
                 if (state.is_running())
                     saw_running.fetch_add(1);
                 else
                     saw_stopped.fetch_add(1);
-                std::this_thread::sleep_for(std::chrono::microseconds(1));
+                observations.fetch_add(1);
             }
         });
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    // Wait for genuine in-flight progress (rather than a fixed wall-clock
+    // delay) before stopping, so the readers are guaranteed to still be
+    // mid-loop and observe both states regardless of scheduler speed.
+    while (observations.load() < num_readers * iterations_per_reader / 4)
+    {
+        std::this_thread::yield();
+    }
     state.stop();
 
     for (auto &t : readers) t.join();
 
     ASSERT_TRUE(saw_running.load() > 0);
     ASSERT_TRUE(saw_stopped.load() > 0);
-    ASSERT_TRUE(saw_running.load() + saw_stopped.load() == num_readers * 100);
+    ASSERT_TRUE(saw_running.load() + saw_stopped.load() == num_readers * iterations_per_reader);
 }
 
 int main()

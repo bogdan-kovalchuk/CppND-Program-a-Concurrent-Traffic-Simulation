@@ -230,6 +230,8 @@ TEST(concurrent_send_during_shutdown_is_safe)
 {
     MessageQueue<int> q;
     const int num_senders = 4;
+    const int msgs_per_sender = 5000;
+    std::atomic<int> attempted{0};
     std::atomic<int> send_ok{0};
     std::atomic<int> send_failed{0};
 
@@ -237,8 +239,9 @@ TEST(concurrent_send_during_shutdown_is_safe)
     for (int s = 0; s < num_senders; ++s)
     {
         senders.emplace_back([&] {
-            for (int i = 0; i < 50; ++i)
+            for (int i = 0; i < msgs_per_sender; ++i)
             {
+                attempted.fetch_add(1);
                 int v = i;
                 try
                 {
@@ -253,14 +256,20 @@ TEST(concurrent_send_during_shutdown_is_safe)
         });
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    // Wait for genuine in-flight progress (rather than a fixed wall-clock
+    // delay) before shutting down, so the queue is guaranteed to still have
+    // senders racing against it regardless of scheduler speed.
+    while (attempted.load() < num_senders * msgs_per_sender / 4)
+    {
+        std::this_thread::yield();
+    }
     q.shutdown();
 
     for (auto &t : senders) t.join();
 
     ASSERT_TRUE(send_ok.load() > 0);
     ASSERT_TRUE(send_failed.load() > 0);
-    ASSERT_EQ(send_ok.load() + send_failed.load(), num_senders * 50);
+    ASSERT_EQ(send_ok.load() + send_failed.load(), num_senders * msgs_per_sender);
 }
 
 TEST(try_send_returns_false_after_shutdown)
