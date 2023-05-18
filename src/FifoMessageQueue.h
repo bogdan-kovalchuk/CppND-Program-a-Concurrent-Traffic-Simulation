@@ -2,6 +2,7 @@
 #define FIFO_MESSAGE_QUEUE_H
 
 #include <queue>
+#include <vector>
 #include <condition_variable>
 #include <mutex>
 #include "MessageQueue.h"
@@ -41,6 +42,19 @@ public:
         _queue.pop();
 
         return msg;
+    }
+
+    std::vector<T> drain()
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+        std::vector<T> result;
+        result.reserve(_queue.size());
+        while (!_queue.empty())
+        {
+            result.push_back(std::move(_queue.front()));
+            _queue.pop();
+        }
+        return result;
     }
 
     void shutdown()
