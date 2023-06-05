@@ -68,12 +68,11 @@ void Vehicle::drive()
             i2 = _currDestination;
             i1 = i2->getID() == _currStreet->getInIntersection()->getID() ? _currStreet->getOutIntersection() : _currStreet->getInIntersection();
 
-            double x1, y1, x2, y2, xv, yv, dx, dy, l;
+            double x1, y1, x2, y2, xv, yv, dx, dy;
             i1->getPosition(x1, y1);
             i2->getPosition(x2, y2);
             dx = x2 - x1;
             dy = y2 - y1;
-            l = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (x1 - x2));
             xv = x1 + completion * dx; // new position based on line equation in parameter form
             yv = y1 + completion * dy;
             this->setPosition(xv, yv);
