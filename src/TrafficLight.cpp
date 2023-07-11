@@ -10,6 +10,14 @@ TrafficLight::TrafficLight()
     _message_queue = std::make_shared<MessageQueue<TrafficLightPhase>>();
 }
 
+TrafficLight::~TrafficLight()
+{
+    // Signal the phase-cycling thread to stop before the base class
+    // destructor joins it, so a TrafficLight can always be destroyed safely
+    // even if the owner never called shutdown() explicitly.
+    shutdown();
+}
+
 void TrafficLight::waitForGreen()
 {
     while (true)

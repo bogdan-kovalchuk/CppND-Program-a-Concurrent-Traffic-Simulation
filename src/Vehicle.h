@@ -14,6 +14,7 @@ class Vehicle : public TrafficObject, public std::enable_shared_from_this<Vehicl
 public:
     // constructor / desctructor
     Vehicle();
+    ~Vehicle();
 
     // getters / setters
     void setCurrentStreet(std::shared_ptr<Street> street) { _currStreet = street; };

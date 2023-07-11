@@ -52,6 +52,15 @@ Intersection::Intersection()
     _isBlocked = false;
 }
 
+Intersection::~Intersection()
+{
+    // Signal the queue-processing thread (and the owned traffic light) to
+    // stop before the base class destructor joins them, so an Intersection
+    // can always be destroyed safely even if the owner never called
+    // shutdown() explicitly.
+    shutdown();
+}
+
 void Intersection::addStreet(std::shared_ptr<Street> street)
 {
     _streets.push_back(street);

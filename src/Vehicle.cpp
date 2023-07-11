@@ -12,6 +12,14 @@ Vehicle::Vehicle()
     _speed = 400; // m/s
 }
 
+Vehicle::~Vehicle()
+{
+    // Signal the drive thread to stop before the base class destructor
+    // joins it, so a Vehicle can always be destroyed safely even if the
+    // owner never called shutdown() explicitly.
+    shutdown();
+}
+
 
 void Vehicle::setCurrentDestination(std::shared_ptr<Intersection> destination)
 {
