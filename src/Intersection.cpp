@@ -156,5 +156,9 @@ bool Intersection::trafficLightIsGreen()
 
 void Intersection::shutdown()
 {
+    // Also stop the owned traffic light's thread: it is a member of this
+    // object and would otherwise keep running (and block destruction) even
+    // after the intersection itself has been asked to stop.
+    _trafficLight.shutdown();
     _workerState.stop();
 }
