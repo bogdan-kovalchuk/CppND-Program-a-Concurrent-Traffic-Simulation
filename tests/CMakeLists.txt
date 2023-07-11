@@ -8,6 +8,18 @@ include_directories(${CMAKE_SOURCE_DIR}/../src)
 
 find_package(Threads REQUIRED)
 
+# Production traffic-object sources exercised directly by the tests below.
+# These do not depend on OpenCV (unlike Graphics.cpp / TrafficSimulator-Final.cpp),
+# so they can be compiled and tested without the GUI dependency.
+set(TRAFFIC_SIM_SRC_DIR ${CMAKE_SOURCE_DIR}/../src)
+set(TRAFFIC_OBJECT_SRCS
+    ${TRAFFIC_SIM_SRC_DIR}/TrafficObject.cpp
+    ${TRAFFIC_SIM_SRC_DIR}/TrafficLight.cpp
+    ${TRAFFIC_SIM_SRC_DIR}/Street.cpp
+    ${TRAFFIC_SIM_SRC_DIR}/Vehicle.cpp
+    ${TRAFFIC_SIM_SRC_DIR}/Intersection.cpp
+)
+
 add_executable(test_message_queue test_message_queue.cpp)
 target_link_libraries(test_message_queue Threads::Threads)
 add_test(NAME message_queue COMMAND test_message_queue)
@@ -59,3 +71,7 @@ add_test(NAME worker_coordinated_stop COMMAND test_worker_coordinated_stop)
 add_executable(test_drain_consistency test_drain_consistency.cpp)
 target_link_libraries(test_drain_consistency Threads::Threads)
 add_test(NAME drain_consistency COMMAND test_drain_consistency)
+
+add_executable(test_traffic_light_shutdown test_traffic_light_shutdown.cpp ${TRAFFIC_OBJECT_SRCS})
+target_link_libraries(test_traffic_light_shutdown Threads::Threads)
+add_test(NAME traffic_light_shutdown COMMAND test_traffic_light_shutdown)
