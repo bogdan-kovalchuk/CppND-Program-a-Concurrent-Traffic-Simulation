@@ -144,21 +144,33 @@ TEST(test_stop_visible_across_threads_immediately)
 {
     WorkerState state;
     std::atomic<bool> observer_saw_stop{false};
-    std::atomic<bool> observer_saw_running_after_stop{false};
+    std::atomic<int> polls{0};
+
+    // Generous upper bound so that a WorkerState which never publishes the
+    // stop fails the assertion instead of hanging the suite forever.
+    const int max_polls = 100000000;
 
     std::thread observer([&] {
-        for (int i = 0; i < 1000; ++i)
+        for (int i = 0; i < max_polls; ++i)
         {
             if (!state.is_running())
             {
                 observer_saw_stop.store(true);
                 break;
             }
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
+            polls.fetch_add(1, std::memory_order_relaxed);
         }
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    // Wait for the observer to be genuinely mid-poll (rather than assuming a
+    // fixed wall-clock delay is enough to get it scheduled) before stopping.
+    // sleep_for() with sub-millisecond durations returns immediately on some
+    // platforms, so a timed handoff is not a reliable synchronisation point:
+    // the observer would drain a bounded poll loop before stop() ever ran.
+    while (polls.load(std::memory_order_relaxed) < 1000)
+    {
+        std::this_thread::yield();
+    }
     state.stop();
     observer.join();
 

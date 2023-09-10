@@ -55,11 +55,14 @@ Intersection::Intersection()
 
 Intersection::~Intersection()
 {
-    // Signal the queue-processing thread (and the owned traffic light) to
-    // stop before the base class destructor joins them, so an Intersection
-    // can always be destroyed safely even if the owner never called
-    // shutdown() explicitly.
+    // Stop *and* join the queue-processing thread (and the owned traffic
+    // light) here, so an Intersection can always be destroyed safely even if
+    // the owner never called shutdown() explicitly. Joining in the base
+    // destructor would be too late: processVehicleQueue() reads
+    // _waitingVehicles, _isBlocked and _workerState, and addVehicleToQueue()
+    // reads _trafficLight -- all destroyed before ~TrafficObject() runs.
     shutdown();
+    joinThreads();
 }
 
 void Intersection::addStreet(std::shared_ptr<Street> street)

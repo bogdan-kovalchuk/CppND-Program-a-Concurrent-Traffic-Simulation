@@ -131,12 +131,31 @@ TEST(test_shutdown_during_work_execution)
         }
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    ASSERT_TRUE(in_work.load());
+    // Wait until the worker is genuinely inside its work section instead of
+    // assuming a fixed sleep lands there. in_work is only true during the 5 ms
+    // work window, so a timed guess can easily observe the gap between two
+    // iterations -- especially on platforms with coarse sleep granularity,
+    // where a 2 ms sleep can overshoot well past the window.
+    bool observed_in_work = false;
+    for (int i = 0; i < 100000000; ++i)
+    {
+        if (in_work.load())
+        {
+            observed_in_work = true;
+            break;
+        }
+        std::this_thread::yield();
+    }
 
     state.stop();
     worker.join();
 
+    // Assert only after the worker has been joined. Throwing while the thread
+    // is still joinable would run std::thread's destructor during stack
+    // unwinding, which calls std::terminate() and aborts the whole suite
+    // instead of reporting a clean test failure.
+    ASSERT_TRUE(observed_in_work);
+    ASSERT_TRUE(work_completed.load());
     ASSERT_TRUE(!state.is_running());
 }
 

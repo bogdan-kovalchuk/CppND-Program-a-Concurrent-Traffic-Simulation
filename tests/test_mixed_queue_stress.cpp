@@ -122,27 +122,41 @@ TEST(test_try_send_under_concurrent_shutdown)
     std::atomic<int> ok{0};
     std::atomic<int> fail{0};
 
+    const int sends_per_thread = 2000;
+    std::atomic<int> attempts{0};
+
     std::vector<std::thread> threads;
     for (int t = 0; t < num_threads; ++t)
     {
         threads.emplace_back([&] {
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < sends_per_thread; ++i)
             {
                 int v = i;
                 if (q.try_send(std::move(v)))
                     ok.fetch_add(1);
                 else
                     fail.fetch_add(1);
-                std::this_thread::sleep_for(std::chrono::microseconds(1));
+                attempts.fetch_add(1);
             }
         });
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    // Shut down only once the senders are genuinely in flight, so the
+    // shutdown really does race concurrent try_send() calls. A fixed
+    // wall-clock delay is not enough: sub-millisecond sleep_for() returns
+    // immediately on some platforms, so every sender would finish before the
+    // shutdown and the test would pass without exercising the race at all.
+    while (attempts.load() < num_threads * sends_per_thread / 4)
+    {
+        std::this_thread::yield();
+    }
     q.shutdown();
 
     for (auto &t : threads) t.join();
-    ASSERT_EQ(ok.load() + fail.load(), num_threads * 100);
+    ASSERT_EQ(ok.load() + fail.load(), num_threads * sends_per_thread);
+    // The shutdown must actually have been observed by the senders, otherwise
+    // this test would silently stop covering the race it is named after.
+    ASSERT_TRUE(fail.load() > 0);
 }
 
 TEST(test_drain_empty_queue_returns_empty_vector)

@@ -15,10 +15,13 @@ Vehicle::Vehicle()
 
 Vehicle::~Vehicle()
 {
-    // Signal the drive thread to stop before the base class destructor
-    // joins it, so a Vehicle can always be destroyed safely even if the
-    // owner never called shutdown() explicitly.
+    // Stop *and* join the drive thread here, so a Vehicle can always be
+    // destroyed safely even if the owner never called shutdown() explicitly.
+    // Joining in the base destructor would be too late: drive() reads
+    // _currStreet, _currDestination and _workerState, which are destroyed
+    // before ~TrafficObject() runs.
     shutdown();
+    joinThreads();
 }
 
 

@@ -26,10 +26,18 @@ TrafficObject::TrafficObject()
     _id = _idCnt++;
 }
 
+void TrafficObject::joinThreads()
+{
+    std::for_each(threads.begin(), threads.end(), [](std::thread &t) {
+        if (t.joinable())
+            t.join();
+    });
+}
+
 TrafficObject::~TrafficObject()
 {
-    // set up thread barrier before this object is destroyed
-    std::for_each(threads.begin(), threads.end(), [](std::thread &t) {
-        t.join();
-    });
+    // Safety net for objects whose derived destructor did not already join
+    // (e.g. plain TrafficObjects). Derived classes owning a worker thread
+    // must still join in their own destructor -- see joinThreads().
+    joinThreads();
 }
