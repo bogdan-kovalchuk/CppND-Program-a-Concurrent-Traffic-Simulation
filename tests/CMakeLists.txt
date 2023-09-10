@@ -75,3 +75,7 @@ add_test(NAME drain_consistency COMMAND test_drain_consistency)
 add_executable(test_traffic_light_shutdown test_traffic_light_shutdown.cpp ${TRAFFIC_OBJECT_SRCS})
 target_link_libraries(test_traffic_light_shutdown Threads::Threads)
 add_test(NAME traffic_light_shutdown COMMAND test_traffic_light_shutdown)
+
+add_executable(test_vehicle_shutdown test_vehicle_shutdown.cpp ${TRAFFIC_OBJECT_SRCS})
+target_link_libraries(test_vehicle_shutdown Threads::Threads)
+add_test(NAME vehicle_shutdown COMMAND test_vehicle_shutdown)
