@@ -32,6 +32,10 @@ add_executable(test_queue_backpressure test_queue_backpressure.cpp)
 target_link_libraries(test_queue_backpressure Threads::Threads)
 add_test(NAME queue_backpressure COMMAND test_queue_backpressure)
 
+add_executable(test_mixed_queue_stress test_mixed_queue_stress.cpp)
+target_link_libraries(test_mixed_queue_stress Threads::Threads)
+add_test(NAME mixed_queue_stress COMMAND test_mixed_queue_stress)
+
 add_executable(test_worker_state test_worker_state.cpp)
 target_link_libraries(test_worker_state Threads::Threads)
 add_test(NAME worker_state COMMAND test_worker_state)
