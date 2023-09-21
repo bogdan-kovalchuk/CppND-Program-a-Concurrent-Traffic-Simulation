@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <thread>
 #include <vector>
 #include <atomic>
@@ -168,6 +168,62 @@ TEST(test_fifo_multi_producer_all_delivered)
     }
 }
 
+TEST(fifo_drain_batch_matches_receive_order)
+{
+    FifoMessageQueue<int> q;
+    const int n = 50;
+    for (int i = 0; i < n; ++i)
+    {
+        int v = i;
+        q.send(std::move(v));
+    }
+
+    auto batch = q.drain();
+    ASSERT_EQ(static_cast<int>(batch.size()), n);
+    for (int i = 0; i < n; ++i)
+    {
+        ASSERT_EQ(batch[i], i);
+    }
+    ASSERT_TRUE(q.empty());
+}
+
+TEST(lifo_drain_batch_matches_receive_order)
+{
+    MessageQueue<int> q;
+    const int n = 50;
+    for (int i = 0; i < n; ++i)
+    {
+        int v = i;
+        q.send(std::move(v));
+    }
+
+    auto batch = q.drain();
+    ASSERT_EQ(static_cast<int>(batch.size()), n);
+    for (int i = 0; i < n; ++i)
+    {
+        ASSERT_EQ(batch[i], n - 1 - i);
+    }
+    ASSERT_TRUE(q.empty());
+}
+
+TEST(fifo_shutdown_then_drain_preserves_order)
+{
+    FifoMessageQueue<int> q;
+    for (int i = 0; i < 10; ++i)
+    {
+        int v = i;
+        q.send(std::move(v));
+    }
+    q.shutdown();
+
+    auto batch = q.drain();
+    ASSERT_EQ(static_cast<int>(batch.size()), 10);
+    for (int i = 0; i < 10; ++i)
+    {
+        ASSERT_EQ(batch[i], i);
+    }
+}
+
 int main()
 {
     std::cout << "Queue comparison tests:\n";
@@ -177,6 +233,9 @@ int main()
     RUN(test_fifo_concurrent_ordering);
     RUN(test_both_queues_handle_same_throughput);
     RUN(test_fifo_multi_producer_all_delivered);
+    RUN(fifo_drain_batch_matches_receive_order);
+    RUN(lifo_drain_batch_matches_receive_order);
+    RUN(fifo_shutdown_then_drain_preserves_order);
 
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed > 0 ? 1 : 0;
