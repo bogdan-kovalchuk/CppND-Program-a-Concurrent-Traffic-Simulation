@@ -28,6 +28,10 @@ add_executable(test_shutdown_drain test_shutdown_drain.cpp)
 target_link_libraries(test_shutdown_drain Threads::Threads)
 add_test(NAME shutdown_drain COMMAND test_shutdown_drain)
 
+add_executable(test_queue_backpressure test_queue_backpressure.cpp)
+target_link_libraries(test_queue_backpressure Threads::Threads)
+add_test(NAME queue_backpressure COMMAND test_queue_backpressure)
+
 add_executable(test_worker_state test_worker_state.cpp)
 target_link_libraries(test_worker_state Threads::Threads)
 add_test(NAME worker_state COMMAND test_worker_state)
@@ -43,3 +47,7 @@ add_test(NAME worker_race_edge_cases COMMAND test_worker_race_edge_cases)
 add_executable(test_worker_lifecycle test_worker_lifecycle.cpp)
 target_link_libraries(test_worker_lifecycle Threads::Threads)
 add_test(NAME worker_lifecycle COMMAND test_worker_lifecycle)
+
+add_executable(test_worker_coordinated_stop test_worker_coordinated_stop.cpp)
+target_link_libraries(test_worker_coordinated_stop Threads::Threads)
+add_test(NAME worker_coordinated_stop COMMAND test_worker_coordinated_stop)
