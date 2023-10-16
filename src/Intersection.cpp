@@ -3,6 +3,7 @@
 #include <chrono>
 #include <future>
 #include <random>
+#include <stdexcept>
 
 #include "Street.h"
 #include "Intersection.h"
@@ -63,6 +64,9 @@ Intersection::~Intersection()
 
 void Intersection::addStreet(std::shared_ptr<Street> street)
 {
+    if (!street)
+        throw std::invalid_argument("Intersection::addStreet: street must not be null");
+
     _streets.push_back(street);
 }
 

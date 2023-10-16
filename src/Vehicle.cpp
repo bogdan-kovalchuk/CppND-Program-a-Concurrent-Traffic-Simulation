@@ -1,5 +1,6 @@
 #include <iostream>
 #include <random>
+#include <stdexcept>
 #include "Street.h"
 #include "Intersection.h"
 #include "Vehicle.h"
@@ -23,6 +24,9 @@ Vehicle::~Vehicle()
 
 void Vehicle::setCurrentDestination(std::shared_ptr<Intersection> destination)
 {
+    if (!destination)
+        throw std::invalid_argument("Vehicle::setCurrentDestination: destination must not be null");
+
     // update destination
     _currDestination = destination;
 
