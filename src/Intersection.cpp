@@ -72,6 +72,9 @@ void Intersection::addStreet(std::shared_ptr<Street> street)
 
 std::vector<std::shared_ptr<Street>> Intersection::queryStreets(std::shared_ptr<Street> incoming)
 {
+    if (!incoming)
+        throw std::invalid_argument("Intersection::queryStreets: incoming street must not be null");
+
     // store all outgoing streets in a vector ...
     std::vector<std::shared_ptr<Street>> outgoings;
     for (auto it : _streets)

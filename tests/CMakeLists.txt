@@ -83,3 +83,7 @@ add_test(NAME vehicle_shutdown COMMAND test_vehicle_shutdown)
 add_executable(test_intersection_shutdown test_intersection_shutdown.cpp ${TRAFFIC_OBJECT_SRCS})
 target_link_libraries(test_intersection_shutdown Threads::Threads)
 add_test(NAME intersection_shutdown COMMAND test_intersection_shutdown)
+
+add_executable(test_input_validation test_input_validation.cpp ${TRAFFIC_OBJECT_SRCS})
+target_link_libraries(test_input_validation Threads::Threads)
+add_test(NAME input_validation COMMAND test_input_validation)
