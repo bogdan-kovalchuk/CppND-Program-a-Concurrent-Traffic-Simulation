@@ -110,7 +110,7 @@ TEST(test_workers_detect_stop_without_lost_wakeup)
         workers.emplace_back([&] {
             while (!state.is_running() == false)
             {
-                auto result = state.wait_for_stop(std::chrono::milliseconds(100));
+                state.wait_for_stop(std::chrono::milliseconds(100));
                 if (!state.is_running())
                 {
                     detected.fetch_add(1);
