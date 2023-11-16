@@ -24,3 +24,28 @@ This is the project for the fourth course in the [Udacity C++ Nanodegree Program
 2. Make a build directory in the top level directory: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
 4. Run it: `./traffic_simulation`.
+
+## Running the Unit Tests
+
+The `tests/` directory contains a standalone CMake project with unit and
+concurrency tests for the queue, worker-state, and traffic-object classes in
+`src/`. Unlike the main `traffic_simulation` target, it does not depend on
+OpenCV, so it can be built and run in environments where OpenCV 4.1 is not
+installed (e.g. to validate concurrency/shutdown-safety fixes without a full
+GUI toolchain):
+
+```
+cd tests
+mkdir build && cd build
+cmake ..
+cmake --build .
+ctest --output-on-failure
+```
+
+Note: `Graphics.cpp` and `TrafficSimulator-Final.cpp` (the OpenCV-dependent
+GUI and entry point) are not exercised by this test suite, since they require
+OpenCV to compile. All other production sources in `src/` (`TrafficObject`,
+`TrafficLight`, `Street`, `Vehicle`, `Intersection`, `MessageQueue`,
+`FifoMessageQueue`, `WorkerState`) are OpenCV-free and are compiled directly
+into the test executables, so the tests exercise the real classes rather than
+reimplementations.
