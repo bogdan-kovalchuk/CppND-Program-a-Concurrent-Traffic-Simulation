@@ -4,6 +4,7 @@
 #include <atomic>
 #include <chrono>
 #include <cassert>
+#include <string>
 #include "WorkerState.h"
 
 static int tests_passed = 0;

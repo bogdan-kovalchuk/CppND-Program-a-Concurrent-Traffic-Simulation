@@ -4,6 +4,7 @@
 #include <atomic>
 #include <chrono>
 #include <memory>
+#include <string>
 #include <cassert>
 #include "WorkerState.h"
 

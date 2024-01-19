@@ -4,6 +4,7 @@
 #include <atomic>
 #include <chrono>
 #include <set>
+#include <string>
 #include "MessageQueue.h"
 #include "FifoMessageQueue.h"
 

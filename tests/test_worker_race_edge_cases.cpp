@@ -3,6 +3,7 @@
 #include <vector>
 #include <atomic>
 #include <chrono>
+#include <string>
 #include <cassert>
 #include "WorkerState.h"
 

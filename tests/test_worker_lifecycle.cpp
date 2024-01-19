@@ -3,6 +3,7 @@
 #include <vector>
 #include <atomic>
 #include <chrono>
+#include <string>
 #include "WorkerState.h"
 
 static int tests_passed = 0;
