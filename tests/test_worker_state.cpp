@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <thread>
 #include <vector>
 #include <atomic>
@@ -140,6 +140,63 @@ TEST(test_multiple_workers_stop_together)
     ASSERT_EQ(exited.load(), num_workers);
 }
 
+TEST(test_stop_visible_across_threads_immediately)
+{
+    WorkerState state;
+    std::atomic<bool> observer_saw_stop{false};
+    std::atomic<bool> observer_saw_running_after_stop{false};
+
+    std::thread observer([&] {
+        for (int i = 0; i < 1000; ++i)
+        {
+            if (!state.is_running())
+            {
+                observer_saw_stop.store(true);
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
+        }
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    state.stop();
+    observer.join();
+
+    ASSERT_TRUE(observer_saw_stop.load());
+}
+
+TEST(test_memory_ordering_under_contention)
+{
+    WorkerState state;
+    const int num_readers = 8;
+    std::atomic<int> saw_running{0};
+    std::atomic<int> saw_stopped{0};
+
+    std::vector<std::thread> readers;
+    for (int r = 0; r < num_readers; ++r)
+    {
+        readers.emplace_back([&] {
+            for (int i = 0; i < 100; ++i)
+            {
+                if (state.is_running())
+                    saw_running.fetch_add(1);
+                else
+                    saw_stopped.fetch_add(1);
+                std::this_thread::sleep_for(std::chrono::microseconds(1));
+            }
+        });
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    state.stop();
+
+    for (auto &t : readers) t.join();
+
+    ASSERT_TRUE(saw_running.load() > 0);
+    ASSERT_TRUE(saw_stopped.load() > 0);
+    ASSERT_TRUE(saw_running.load() + saw_stopped.load() == num_readers * 100);
+}
+
 int main()
 {
     std::cout << "WorkerState characterization tests:\n";
@@ -152,6 +209,8 @@ int main()
     RUN(test_wait_for_stop_times_out);
     RUN(test_worker_exits_cleanly_after_stop);
     RUN(test_multiple_workers_stop_together);
+    RUN(test_stop_visible_across_threads_immediately);
+    RUN(test_memory_ordering_under_contention);
 
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed > 0 ? 1 : 0;
