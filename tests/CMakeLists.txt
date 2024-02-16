@@ -32,6 +32,10 @@ add_executable(test_message_queue test_message_queue.cpp)
 target_link_libraries(test_message_queue Threads::Threads)
 add_test(NAME message_queue COMMAND test_message_queue)
 
+add_executable(test_bounded_message_queue test_bounded_message_queue.cpp)
+target_link_libraries(test_bounded_message_queue Threads::Threads)
+add_test(NAME bounded_message_queue COMMAND test_bounded_message_queue)
+
 add_executable(test_queue_comparison test_queue_comparison.cpp)
 target_link_libraries(test_queue_comparison Threads::Threads)
 add_test(NAME queue_comparison COMMAND test_queue_comparison)
