@@ -1,9 +1,11 @@
 #include <atomic>
 #include <chrono>
 #include <iostream>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "MessageQueue.h"
 #include "FifoMessageQueue.h"
@@ -194,6 +196,71 @@ TEST(test_fifo_queue_drain_wakes_blocked_sender)
     test_drain_wakes_blocked_sender_impl<FifoMessageQueue<int>>();
 }
 
+template <typename Queue>
+void test_bounded_multi_producer_multi_consumer_impl()
+{
+    Queue queue(3);
+    constexpr int producer_count = 4;
+    constexpr int consumer_count = 3;
+    constexpr int values_per_producer = 75;
+    constexpr int total = producer_count * values_per_producer;
+
+    std::vector<bool> seen(total, false);
+    std::mutex seen_mutex;
+    std::atomic<bool> integrity{true};
+    std::vector<std::thread> consumers;
+    for (int consumer = 0; consumer < consumer_count; ++consumer)
+    {
+        consumers.emplace_back([&] {
+            for (int index = 0; index < total / consumer_count; ++index)
+            {
+                const int value = queue.receive();
+                std::lock_guard<std::mutex> lock(seen_mutex);
+                if (value < 0 || value >= total || seen.at(static_cast<std::size_t>(value)))
+                {
+                    integrity.store(false);
+                }
+                else
+                {
+                    seen.at(static_cast<std::size_t>(value)) = true;
+                }
+            }
+        });
+    }
+
+    std::vector<std::thread> producers;
+    for (int producer = 0; producer < producer_count; ++producer)
+    {
+        producers.emplace_back([&, producer] {
+            for (int value = 0; value < values_per_producer; ++value)
+            {
+                int message = producer * values_per_producer + value;
+                queue.send(std::move(message));
+            }
+        });
+    }
+
+    for (auto &producer : producers)
+        producer.join();
+    for (auto &consumer : consumers)
+        consumer.join();
+
+    ASSERT_TRUE(integrity.load());
+    for (bool value_seen : seen)
+        ASSERT_TRUE(value_seen);
+    ASSERT_TRUE(queue.empty());
+}
+
+TEST(test_message_queue_bounded_multi_producer_multi_consumer)
+{
+    test_bounded_multi_producer_multi_consumer_impl<MessageQueue<int>>();
+}
+
+TEST(test_fifo_queue_bounded_multi_producer_multi_consumer)
+{
+    test_bounded_multi_producer_multi_consumer_impl<FifoMessageQueue<int>>();
+}
+
 int main()
 {
     std::cout << "Bounded MessageQueue tests:\n";
@@ -206,6 +273,8 @@ int main()
     RUN(test_fifo_queue_shutdown_wakes_blocked_sender);
     RUN(test_message_queue_drain_wakes_blocked_sender);
     RUN(test_fifo_queue_drain_wakes_blocked_sender);
+    RUN(test_message_queue_bounded_multi_producer_multi_consumer);
+    RUN(test_fifo_queue_bounded_multi_producer_multi_consumer);
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed == 0 ? 0 : 1;
 }
