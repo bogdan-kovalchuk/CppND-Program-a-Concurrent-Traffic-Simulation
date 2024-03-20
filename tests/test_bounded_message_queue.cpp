@@ -153,6 +153,47 @@ TEST(test_fifo_queue_shutdown_wakes_blocked_sender)
     test_shutdown_wakes_blocked_sender_impl<FifoMessageQueue<int>>();
 }
 
+template <typename Queue>
+void test_drain_wakes_blocked_sender_impl()
+{
+    Queue queue(1);
+    int first = 7;
+    queue.send(std::move(first));
+
+    std::atomic<bool> sender_started{false};
+    std::atomic<bool> sender_finished{false};
+    std::thread sender([&] {
+        sender_started.store(true);
+        int second = 8;
+        queue.send(std::move(second));
+        sender_finished.store(true);
+    });
+
+    while (!sender_started.load())
+        std::this_thread::yield();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    const bool sender_blocked = !sender_finished.load();
+
+    const auto batch = queue.drain();
+    sender.join();
+
+    ASSERT_TRUE(sender_blocked);
+    ASSERT_EQ(batch.size(), static_cast<std::size_t>(1));
+    ASSERT_EQ(batch.at(0), 7);
+    ASSERT_TRUE(sender_finished.load());
+    ASSERT_EQ(queue.receive(), 8);
+}
+
+TEST(test_message_queue_drain_wakes_blocked_sender)
+{
+    test_drain_wakes_blocked_sender_impl<MessageQueue<int>>();
+}
+
+TEST(test_fifo_queue_drain_wakes_blocked_sender)
+{
+    test_drain_wakes_blocked_sender_impl<FifoMessageQueue<int>>();
+}
+
 int main()
 {
     std::cout << "Bounded MessageQueue tests:\n";
@@ -163,6 +204,8 @@ int main()
     RUN(test_fifo_queue_try_send_rejects_full_queue);
     RUN(test_message_queue_shutdown_wakes_blocked_sender);
     RUN(test_fifo_queue_shutdown_wakes_blocked_sender);
+    RUN(test_message_queue_drain_wakes_blocked_sender);
+    RUN(test_fifo_queue_drain_wakes_blocked_sender);
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed == 0 ? 0 : 1;
 }
