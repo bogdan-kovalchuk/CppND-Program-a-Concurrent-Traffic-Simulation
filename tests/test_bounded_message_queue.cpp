@@ -109,6 +109,50 @@ TEST(test_fifo_queue_try_send_rejects_full_queue)
     ASSERT_EQ(queue.receive(), 1);
 }
 
+template <typename Queue>
+void test_shutdown_wakes_blocked_sender_impl()
+{
+    Queue queue(1);
+    int first = 1;
+    queue.send(std::move(first));
+
+    std::atomic<bool> sender_started{false};
+    std::atomic<bool> sender_closed{false};
+    std::thread sender([&] {
+        sender_started.store(true);
+        int second = 2;
+        try
+        {
+            queue.send(std::move(second));
+        }
+        catch (const QueueClosedException &)
+        {
+            sender_closed.store(true);
+        }
+    });
+
+    while (!sender_started.load())
+        std::this_thread::yield();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    const bool sender_blocked = !sender_closed.load();
+
+    queue.shutdown();
+    sender.join();
+    ASSERT_TRUE(sender_blocked);
+    ASSERT_TRUE(sender_closed.load());
+    ASSERT_EQ(queue.receive(), 1);
+}
+
+TEST(test_message_queue_shutdown_wakes_blocked_sender)
+{
+    test_shutdown_wakes_blocked_sender_impl<MessageQueue<int>>();
+}
+
+TEST(test_fifo_queue_shutdown_wakes_blocked_sender)
+{
+    test_shutdown_wakes_blocked_sender_impl<FifoMessageQueue<int>>();
+}
+
 int main()
 {
     std::cout << "Bounded MessageQueue tests:\n";
@@ -117,6 +161,8 @@ int main()
     RUN(test_message_queue_rejects_zero_capacity);
     RUN(test_fifo_queue_blocks_sender_at_capacity);
     RUN(test_fifo_queue_try_send_rejects_full_queue);
+    RUN(test_message_queue_shutdown_wakes_blocked_sender);
+    RUN(test_fifo_queue_shutdown_wakes_blocked_sender);
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed == 0 ? 0 : 1;
 }
