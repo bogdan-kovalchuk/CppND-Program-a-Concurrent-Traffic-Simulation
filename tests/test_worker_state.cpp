@@ -43,18 +43,19 @@ TEST(test_stop_sets_not_running)
 TEST(test_stop_is_idempotent)
 {
     WorkerState state;
-    state.stop();
-    state.stop();
-    state.stop();
+    ASSERT_TRUE(state.stop());
+    ASSERT_TRUE(!state.stop());
+    ASSERT_TRUE(!state.stop());
     ASSERT_TRUE(!state.is_running());
 }
 
 TEST(test_restart_resumes_running)
 {
     WorkerState state;
-    state.stop();
+    ASSERT_TRUE(state.stop());
     ASSERT_TRUE(!state.is_running());
-    state.restart();
+    ASSERT_TRUE(state.restart());
+    ASSERT_TRUE(!state.restart());
     ASSERT_TRUE(state.is_running());
 }
 

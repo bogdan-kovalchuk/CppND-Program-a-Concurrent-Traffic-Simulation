@@ -50,13 +50,20 @@ public:
         return _running.load(std::memory_order_acquire);
     }
 
-    void stop()
+    bool stop()
     {
+        bool changed = false;
         {
             std::lock_guard<std::mutex> lock(_mtx);
-            _running.store(false, std::memory_order_release);
+            if (_running.load(std::memory_order_relaxed))
+            {
+                _running.store(false, std::memory_order_release);
+                changed = true;
+            }
         }
-        _cv.notify_all();
+        if (changed)
+            _cv.notify_all();
+        return changed;
     }
 
     bool wait_for_stop(std::chrono::milliseconds timeout)
@@ -67,13 +74,20 @@ public:
         });
     }
 
-    void restart()
+    bool restart()
     {
+        bool changed = false;
         {
             std::lock_guard<std::mutex> lock(_mtx);
-            _running.store(true, std::memory_order_release);
+            if (!_running.load(std::memory_order_relaxed))
+            {
+                _running.store(true, std::memory_order_release);
+                changed = true;
+            }
         }
-        _cv.notify_all();
+        if (changed)
+            _cv.notify_all();
+        return changed;
     }
 
 private:
