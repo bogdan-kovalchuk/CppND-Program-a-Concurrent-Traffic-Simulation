@@ -21,14 +21,21 @@ TrafficLight::~TrafficLight()
     joinThreads();
 }
 
-void TrafficLight::waitForGreen()
+bool TrafficLight::waitForGreen()
 {
-    while (true)
+    try
     {
-        if (_message_queue.get()->receive() == TrafficLightPhase::green)
+        while (true)
         {
-            return;
+            if (_message_queue->receive() == TrafficLightPhase::green)
+            {
+                return true;
+            }
         }
+    }
+    catch (const QueueClosedException &)
+    {
+        return false;
     }
 }
 
@@ -44,6 +51,7 @@ void TrafficLight::simulate()
 
 void TrafficLight::shutdown()
 {
+    _message_queue->shutdown();
     _workerState.stop();
 }
 
@@ -53,15 +61,13 @@ void TrafficLight::cycleThroughPhases()
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distr(4000, 6000);
 
-    double cycleDuration = distr(gen);
-    std::chrono::time_point<std::chrono::system_clock> lastUpdate;
-
-    lastUpdate = std::chrono::system_clock::now();
+    int cycleDuration = distr(gen);
+    auto lastUpdate = std::chrono::steady_clock::now();
     while (_workerState.is_running())
     {
         _workerState.wait_for_stop(std::chrono::milliseconds(1));
 
-        long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
+        const auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastUpdate).count();
         if (timeSinceLastUpdate >= cycleDuration)
         {
             if (_currentPhase == TrafficLightPhase::red)
@@ -74,13 +80,10 @@ void TrafficLight::cycleThroughPhases()
             }
 
             TrafficLightPhase message = _currentPhase;
-            auto ft = std::async(std::launch::async,
-                                 &MessageQueue<TrafficLightPhase>::send,
-                                 _message_queue,
-                                 std::move(message));
-            ft.wait();
+            if (!_message_queue->try_send(std::move(message)))
+                return;
 
-            lastUpdate = std::chrono::system_clock::now();
+            lastUpdate = std::chrono::steady_clock::now();
             cycleDuration = distr(gen);
         }
     }

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <atomic>
 #include <thread>
 #include <chrono>
 #include <stdexcept>
@@ -71,6 +72,24 @@ TEST(test_shutdown_before_simulate_is_safe)
     tl.shutdown();
 }
 
+TEST(test_shutdown_releases_waiting_green_request)
+{
+    TrafficLight tl;
+    std::atomic<bool> waiter_started{false};
+    std::atomic<bool> saw_green{true};
+    std::thread waiter([&] {
+        waiter_started.store(true);
+        saw_green.store(tl.waitForGreen());
+    });
+
+    while (!waiter_started.load())
+        std::this_thread::yield();
+    tl.shutdown();
+    waiter.join();
+
+    ASSERT_TRUE(!saw_green.load());
+}
+
 int main()
 {
     std::cout << "TrafficLight shutdown-safety tests:\n";
@@ -80,6 +99,7 @@ int main()
     RUN(test_destructor_stops_thread_without_explicit_shutdown);
     RUN(test_shutdown_is_idempotent);
     RUN(test_shutdown_before_simulate_is_safe);
+    RUN(test_shutdown_releases_waiting_green_request);
 
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed > 0 ? 1 : 0;

@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <random>
-#include <future>
 #include "TrafficObject.h"
 #include "MessageQueue.h"
 #include "WorkerState.h"
@@ -28,7 +27,7 @@ public:
     TrafficLightPhase getCurrentPhase();
 
     // typical behaviour methods
-    void waitForGreen();
+    bool waitForGreen();
     void simulate();
     void shutdown();
 
