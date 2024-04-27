@@ -179,6 +179,35 @@ TEST(test_stop_visible_across_threads_immediately)
     ASSERT_TRUE(observer_saw_stop.load());
 }
 
+TEST(test_generation_changes_for_each_state_transition)
+{
+    WorkerState state;
+    const std::size_t initial = state.generation();
+    ASSERT_TRUE(state.stop());
+    ASSERT_EQ(state.generation(), initial + 1);
+    ASSERT_TRUE(state.restart());
+    ASSERT_EQ(state.generation(), initial + 2);
+}
+
+TEST(test_wait_for_change_unblocks_on_stop)
+{
+    WorkerState state;
+    const std::size_t observed = state.generation();
+    std::atomic<bool> observer_started{false};
+    std::atomic<bool> transition_observed{false};
+
+    std::thread observer([&] {
+        observer_started.store(true);
+        transition_observed.store(state.wait_for_change(std::chrono::milliseconds(500), observed));
+    });
+
+    while (!observer_started.load())
+        std::this_thread::yield();
+    ASSERT_TRUE(state.stop());
+    observer.join();
+    ASSERT_TRUE(transition_observed.load());
+}
+
 TEST(test_memory_ordering_under_contention)
 {
     WorkerState state;
@@ -232,6 +261,8 @@ int main()
     RUN(test_worker_exits_cleanly_after_stop);
     RUN(test_multiple_workers_stop_together);
     RUN(test_stop_visible_across_threads_immediately);
+    RUN(test_generation_changes_for_each_state_transition);
+    RUN(test_wait_for_change_unblocks_on_stop);
     RUN(test_memory_ordering_under_contention);
 
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";

@@ -4,6 +4,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
 
 // WorkerState: tracks whether a worker thread should continue running.
@@ -58,6 +59,7 @@ public:
             if (_running.load(std::memory_order_relaxed))
             {
                 _running.store(false, std::memory_order_release);
+                ++_generation;
                 changed = true;
             }
         }
@@ -74,6 +76,20 @@ public:
         });
     }
 
+    std::size_t generation() const
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+        return _generation;
+    }
+
+    bool wait_for_change(std::chrono::milliseconds timeout, std::size_t observed_generation)
+    {
+        std::unique_lock<std::mutex> lock(_mtx);
+        return _cv.wait_for(lock, timeout, [this, observed_generation] {
+            return _generation != observed_generation;
+        });
+    }
+
     bool restart()
     {
         bool changed = false;
@@ -82,6 +98,7 @@ public:
             if (!_running.load(std::memory_order_relaxed))
             {
                 _running.store(true, std::memory_order_release);
+                ++_generation;
                 changed = true;
             }
         }
@@ -92,8 +109,9 @@ public:
 
 private:
     std::atomic<bool> _running;
-    std::mutex _mtx;
+    mutable std::mutex _mtx;
     std::condition_variable _cv;
+    std::size_t _generation = 0;
 };
 
 #endif
