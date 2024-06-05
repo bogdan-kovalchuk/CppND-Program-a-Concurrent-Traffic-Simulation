@@ -11,19 +11,35 @@
 
 /* Implementation of class "WaitingVehicles" */
 
-int WaitingVehicles::getSize()
+std::size_t WaitingVehicles::getSize()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
     return _vehicles.size();
 }
 
-void WaitingVehicles::pushBack(std::shared_ptr<Vehicle> vehicle, std::promise<void> &&promise)
+bool WaitingVehicles::pushBack(std::shared_ptr<Vehicle> vehicle, std::promise<void> &&promise)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
+    if (_closed)
+        return false;
     _vehicles.push_back(vehicle);
     _promises.push_back(std::move(promise));
+    return true;
+}
+
+void WaitingVehicles::shutdown()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_closed)
+        return;
+
+    _closed = true;
+    for (auto &promise : _promises)
+        promise.set_value();
+    _vehicles.clear();
+    _promises.clear();
 }
 
 void WaitingVehicles::permitEntryToFirstInQueue()
@@ -92,7 +108,7 @@ std::vector<std::shared_ptr<Street>> Intersection::queryStreets(std::shared_ptr<
 }
 
 // adds a new vehicle to the queue and returns once the vehicle is allowed to enter
-void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
+bool Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
 {
     std::unique_lock<std::mutex> lck(_mtx);
     std::cout << "Intersection #" << _id << "::addVehicleToQueue: thread id = " << std::this_thread::get_id() << std::endl;
@@ -101,10 +117,13 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
     // add new vehicle to the end of the waiting line
     std::promise<void> prmsVehicleAllowedToEnter;
     std::future<void> ftrVehicleAllowedToEnter = prmsVehicleAllowedToEnter.get_future();
-    _waitingVehicles.pushBack(vehicle, std::move(prmsVehicleAllowedToEnter));
+    if (!_waitingVehicles.pushBack(vehicle, std::move(prmsVehicleAllowedToEnter)))
+        return false;
 
     // wait until the vehicle is allowed to enter
-    ftrVehicleAllowedToEnter.wait();
+    ftrVehicleAllowedToEnter.get();
+    if (!_workerState.is_running())
+        return false;
     lck.lock();
     std::cout << "Intersection #" << _id << ": Vehicle #" << vehicle->getID() << " is granted entry." << std::endl;
     lck.unlock();
@@ -112,8 +131,10 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
     // block until the traffic light turns green
     if (_trafficLight.getCurrentPhase() == TrafficLightPhase::red)
     {
-        _trafficLight.waitForGreen();
+        if (!_trafficLight.waitForGreen())
+            return false;
     }
+    return true;
 }
 
 void Intersection::vehicleHasLeft(std::shared_ptr<Vehicle> vehicle)
@@ -170,6 +191,7 @@ void Intersection::shutdown()
     // Also stop the owned traffic light's thread: it is a member of this
     // object and would otherwise keep running (and block destruction) even
     // after the intersection itself has been asked to stop.
-    _trafficLight.shutdown();
     _workerState.stop();
+    _waitingVehicles.shutdown();
+    _trafficLight.shutdown();
 }

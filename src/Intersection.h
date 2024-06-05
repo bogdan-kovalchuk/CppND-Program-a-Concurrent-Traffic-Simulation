@@ -2,6 +2,7 @@
 #define INTERSECTION_H
 
 #include <atomic>
+#include <cstddef>
 #include <vector>
 #include <future>
 #include <mutex>
@@ -19,16 +20,18 @@ class WaitingVehicles
 {
 public:
     // getters / setters
-    int getSize();
+    std::size_t getSize();
 
     // typical behaviour methods
-    void pushBack(std::shared_ptr<Vehicle> vehicle, std::promise<void> &&promise);
+    bool pushBack(std::shared_ptr<Vehicle> vehicle, std::promise<void> &&promise);
     void permitEntryToFirstInQueue();
+    void shutdown();
 
 private:
     std::vector<std::shared_ptr<Vehicle>> _vehicles; // list of all vehicles waiting to enter this intersection
     std::vector<std::promise<void>> _promises;       // list of associated promises
     std::mutex _mutex;
+    bool _closed = false;
 };
 
 class Intersection : public TrafficObject
@@ -42,7 +45,7 @@ public:
     void setIsBlocked(bool isBlocked);
 
     // typical behaviour methods
-    void addVehicleToQueue(std::shared_ptr<Vehicle> vehicle);
+    bool addVehicleToQueue(std::shared_ptr<Vehicle> vehicle);
     void addStreet(std::shared_ptr<Street> street);
     std::vector<std::shared_ptr<Street>> queryStreets(std::shared_ptr<Street> incoming); // return pointer to current list of all outgoing streets
     void simulate();

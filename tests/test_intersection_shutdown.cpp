@@ -1,9 +1,12 @@
 #include <iostream>
+#include <atomic>
 #include <thread>
 #include <chrono>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include "Intersection.h"
+#include "Vehicle.h"
 
 static int tests_passed = 0;
 static int tests_failed = 0;
@@ -68,6 +71,25 @@ TEST(test_shutdown_is_idempotent)
     i.shutdown();
 }
 
+TEST(test_shutdown_releases_queued_vehicle)
+{
+    Intersection intersection;
+    auto vehicle = std::make_shared<Vehicle>();
+    std::atomic<bool> queue_call_started{false};
+    std::atomic<bool> entered{true};
+    std::thread waiter([&] {
+        queue_call_started.store(true);
+        entered.store(intersection.addVehicleToQueue(vehicle));
+    });
+
+    while (!queue_call_started.load())
+        std::this_thread::yield();
+    intersection.shutdown();
+    waiter.join();
+
+    ASSERT_TRUE(!entered.load());
+}
+
 int main()
 {
     std::cout << "Intersection shutdown-safety tests:\n";
@@ -76,6 +98,7 @@ int main()
     RUN(test_destructor_stops_all_threads_without_explicit_shutdown);
     RUN(test_traffic_light_is_green_reflects_current_phase);
     RUN(test_shutdown_is_idempotent);
+    RUN(test_shutdown_releases_queued_vehicle);
 
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed > 0 ? 1 : 0;
