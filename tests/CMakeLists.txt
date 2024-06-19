@@ -55,3 +55,7 @@ add_test(NAME worker_lifecycle COMMAND test_worker_lifecycle)
 add_executable(test_worker_coordinated_stop test_worker_coordinated_stop.cpp)
 target_link_libraries(test_worker_coordinated_stop Threads::Threads)
 add_test(NAME worker_coordinated_stop COMMAND test_worker_coordinated_stop)
+
+add_executable(test_drain_consistency test_drain_consistency.cpp)
+target_link_libraries(test_drain_consistency Threads::Threads)
+add_test(NAME drain_consistency COMMAND test_drain_consistency)
