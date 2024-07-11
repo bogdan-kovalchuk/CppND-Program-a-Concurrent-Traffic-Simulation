@@ -52,6 +52,12 @@ TEST(test_vehicle_set_current_destination_rejects_null)
     ASSERT_THROWS(vehicle.setCurrentDestination(nullptr), std::invalid_argument);
 }
 
+TEST(test_vehicle_set_current_street_rejects_null)
+{
+    Vehicle vehicle;
+    ASSERT_THROWS(vehicle.setCurrentStreet(nullptr), std::invalid_argument);
+}
+
 TEST(test_vehicle_set_current_destination_accepts_valid_pointer)
 {
     Vehicle vehicle;
@@ -63,6 +69,12 @@ TEST(test_intersection_add_street_rejects_null)
 {
     Intersection intersection;
     ASSERT_THROWS(intersection.addStreet(nullptr), std::invalid_argument);
+}
+
+TEST(test_intersection_add_vehicle_rejects_null)
+{
+    Intersection intersection;
+    ASSERT_THROWS(intersection.addVehicleToQueue(nullptr), std::invalid_argument);
 }
 
 TEST(test_intersection_query_streets_rejects_null)
@@ -93,7 +105,9 @@ int main()
     RUN(test_street_set_in_intersection_accepts_valid_pointer);
     RUN(test_vehicle_set_current_destination_rejects_null);
     RUN(test_vehicle_set_current_destination_accepts_valid_pointer);
+    RUN(test_vehicle_set_current_street_rejects_null);
     RUN(test_intersection_add_street_rejects_null);
+    RUN(test_intersection_add_vehicle_rejects_null);
     RUN(test_intersection_add_street_accepts_valid_pointer);
     RUN(test_intersection_query_streets_rejects_null);
 

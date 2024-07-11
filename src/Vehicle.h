@@ -17,7 +17,7 @@ public:
     ~Vehicle();
 
     // getters / setters
-    void setCurrentStreet(std::shared_ptr<Street> street) { _currStreet = street; };
+    void setCurrentStreet(std::shared_ptr<Street> street);
     void setCurrentDestination(std::shared_ptr<Intersection> destination);
 
     // typical behaviour methods

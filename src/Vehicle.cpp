@@ -24,6 +24,13 @@ Vehicle::~Vehicle()
     joinThreads();
 }
 
+void Vehicle::setCurrentStreet(std::shared_ptr<Street> street)
+{
+    if (!street)
+        throw std::invalid_argument("Vehicle::setCurrentStreet: street must not be null");
+
+    _currStreet = street;
+}
 
 void Vehicle::setCurrentDestination(std::shared_ptr<Intersection> destination)
 {
