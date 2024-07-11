@@ -1,6 +1,7 @@
 #ifndef TRAFFICOBJECT_H
 #define TRAFFICOBJECT_H
 
+#include <atomic>
 #include <vector>
 #include <thread>
 #include <mutex>
@@ -21,7 +22,7 @@ public:
     virtual ~TrafficObject();
 
     // getter and setter
-    int getID() { return _id; }
+    int getID() const { return _id; }
     void setPosition(double x, double y);
     void getPosition(double &x, double &y);
     ObjectType getType() { return _type; }
@@ -49,7 +50,7 @@ protected:
     static std::mutex _mtx;           // mutex shared by all traffic objects for protecting cout 
 
 private:
-    static int _idCnt; // global variable for counting object ids
+    static std::atomic<int> _idCnt; // global variable for counting object ids
 };
 
 #endif

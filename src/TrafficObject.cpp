@@ -4,7 +4,7 @@
 #include "TrafficObject.h"
 
 // init static variable
-int TrafficObject::_idCnt = 0;
+std::atomic<int> TrafficObject::_idCnt{0};
 
 std::mutex TrafficObject::_mtx;
 
@@ -23,7 +23,7 @@ void TrafficObject::getPosition(double &x, double &y)
 TrafficObject::TrafficObject()
 {
     _type = ObjectType::noObject;
-    _id = _idCnt++;
+    _id = _idCnt.fetch_add(1, std::memory_order_relaxed);
 }
 
 void TrafficObject::joinThreads()

@@ -103,3 +103,7 @@ add_test(NAME input_validation COMMAND test_input_validation)
 add_executable(test_traffic_object_teardown test_traffic_object_teardown.cpp ${TRAFFIC_OBJECT_SRCS})
 target_link_libraries(test_traffic_object_teardown Threads::Threads)
 add_test(NAME traffic_object_teardown COMMAND test_traffic_object_teardown)
+
+add_executable(test_traffic_object_concurrency test_traffic_object_concurrency.cpp ${TRAFFIC_SIM_SRC_DIR}/TrafficObject.cpp)
+target_link_libraries(test_traffic_object_concurrency Threads::Threads)
+add_test(NAME traffic_object_concurrency COMMAND test_traffic_object_concurrency)
