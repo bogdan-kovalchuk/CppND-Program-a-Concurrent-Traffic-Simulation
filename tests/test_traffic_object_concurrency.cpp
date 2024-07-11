@@ -1,4 +1,5 @@
 #include <iostream>
+#include <atomic>
 #include <mutex>
 #include <set>
 #include <stdexcept>
@@ -53,10 +54,44 @@ TEST(test_concurrent_objects_receive_unique_ids)
     ASSERT_TRUE(unique_ids.size() == ids.size());
 }
 
+TEST(test_position_reads_observe_complete_snapshots)
+{
+    TrafficObject object;
+    std::atomic<bool> writer_done{false};
+    std::atomic<bool> consistent{true};
+
+    std::thread writer([&] {
+        for (int value = 0; value < 50000; ++value)
+            object.setPosition(static_cast<double>(value), static_cast<double>(-value));
+        writer_done.store(true);
+    });
+
+    std::vector<std::thread> readers;
+    for (int index = 0; index < 4; ++index)
+    {
+        readers.emplace_back([&] {
+            while (!writer_done.load())
+            {
+                double x = 0.0;
+                double y = 0.0;
+                object.getPosition(x, y);
+                if (y != -x)
+                    consistent.store(false);
+            }
+        });
+    }
+
+    writer.join();
+    for (auto &reader : readers)
+        reader.join();
+    ASSERT_TRUE(consistent.load());
+}
+
 int main()
 {
     std::cout << "TrafficObject concurrency tests:\n";
     RUN(test_concurrent_objects_receive_unique_ids);
+    RUN(test_position_reads_observe_complete_snapshots);
     std::cout << "\nResults: " << tests_passed << " passed, " << tests_failed << " failed\n";
     return tests_failed == 0 ? 0 : 1;
 }

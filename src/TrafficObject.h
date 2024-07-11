@@ -24,7 +24,7 @@ public:
     // getter and setter
     int getID() const { return _id; }
     void setPosition(double x, double y);
-    void getPosition(double &x, double &y);
+    void getPosition(double &x, double &y) const;
     ObjectType getType() { return _type; }
 
     // typical behaviour methods
@@ -48,6 +48,7 @@ protected:
     double _posX, _posY;              // vehicle position in pixels
     std::vector<std::thread> threads; // holds all threads that have been launched within this object
     static std::mutex _mtx;           // mutex shared by all traffic objects for protecting cout 
+    mutable std::mutex _positionMtx;  // protects a position snapshot shared with rendering
 
 private:
     static std::atomic<int> _idCnt; // global variable for counting object ids
