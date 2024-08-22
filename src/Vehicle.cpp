@@ -1,4 +1,6 @@
 #include <iostream>
+#include <chrono>
+#include <cstddef>
 #include <random>
 #include <stdexcept>
 #include "Street.h"
@@ -65,22 +67,21 @@ void Vehicle::drive()
 
     // initalize variables
     bool hasEnteredIntersection = false;
-    double cycleDuration = 1; // duration of a single simulation cycle in ms
-    std::chrono::time_point<std::chrono::system_clock> lastUpdate;
+    const auto cycleDuration = std::chrono::milliseconds(1);
 
     // init stop watch
-    lastUpdate = std::chrono::system_clock::now();
+    auto lastUpdate = std::chrono::steady_clock::now();
     while (_workerState.is_running())
     {
         // sleep at every iteration to reduce CPU usage
         _workerState.wait_for_stop(std::chrono::milliseconds(1));
 
         // compute time difference to stop watch
-        long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
+        const auto timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastUpdate);
         if (timeSinceLastUpdate >= cycleDuration)
         {
             // update position with a constant velocity motion model
-            _posStreet += _speed * timeSinceLastUpdate / 1000;
+            _posStreet += _speed * static_cast<double>(timeSinceLastUpdate.count()) / 1000.0;
 
             // compute completion rate of current street
             double completion = _posStreet / _currStreet->getLength();
@@ -125,7 +126,7 @@ void Vehicle::drive()
                     // pick one street at random and query intersection to enter this street
                     std::random_device rd;
                     std::mt19937 eng(rd());
-                    std::uniform_int_distribution<> distr(0, streetOptions.size() - 1);
+                    std::uniform_int_distribution<std::size_t> distr(0, streetOptions.size() - 1);
                     nextStreet = streetOptions.at(distr(eng));
                 }
                 else
@@ -150,7 +151,7 @@ void Vehicle::drive()
             }
 
             // reset stop watch for next cycle
-            lastUpdate = std::chrono::system_clock::now();
+            lastUpdate = std::chrono::steady_clock::now();
         }
     } // eof simulation loop
 }
