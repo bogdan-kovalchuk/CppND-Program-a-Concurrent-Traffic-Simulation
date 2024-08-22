@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
-    add_compile_options(/W4 /permissive-)
+    add_compile_options(/W4 /permissive- /FS)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -111,3 +111,7 @@ add_test(NAME traffic_object_concurrency COMMAND test_traffic_object_concurrency
 add_executable(test_intersection_concurrency test_intersection_concurrency.cpp ${TRAFFIC_OBJECT_SRCS})
 target_link_libraries(test_intersection_concurrency Threads::Threads)
 add_test(NAME intersection_concurrency COMMAND test_intersection_concurrency)
+
+add_executable(test_production_lifecycle_stress test_production_lifecycle_stress.cpp ${TRAFFIC_OBJECT_SRCS})
+target_link_libraries(test_production_lifecycle_stress Threads::Threads)
+add_test(NAME production_lifecycle_stress COMMAND test_production_lifecycle_stress)
