@@ -86,6 +86,7 @@ void Intersection::addStreet(std::shared_ptr<Street> street)
     if (!street)
         throw std::invalid_argument("Intersection::addStreet: street must not be null");
 
+    std::lock_guard<std::mutex> lock(_streetsMutex);
     _streets.push_back(street);
 }
 
@@ -94,6 +95,7 @@ std::vector<std::shared_ptr<Street>> Intersection::queryStreets(std::shared_ptr<
     if (!incoming)
         throw std::invalid_argument("Intersection::queryStreets: incoming street must not be null");
 
+    std::lock_guard<std::mutex> lock(_streetsMutex);
     // store all outgoing streets in a vector ...
     std::vector<std::shared_ptr<Street>> outgoings;
     for (auto it : _streets)

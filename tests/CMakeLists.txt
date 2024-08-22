@@ -107,3 +107,7 @@ add_test(NAME traffic_object_teardown COMMAND test_traffic_object_teardown)
 add_executable(test_traffic_object_concurrency test_traffic_object_concurrency.cpp ${TRAFFIC_SIM_SRC_DIR}/TrafficObject.cpp)
 target_link_libraries(test_traffic_object_concurrency Threads::Threads)
 add_test(NAME traffic_object_concurrency COMMAND test_traffic_object_concurrency)
+
+add_executable(test_intersection_concurrency test_intersection_concurrency.cpp ${TRAFFIC_OBJECT_SRCS})
+target_link_libraries(test_intersection_concurrency Threads::Threads)
+add_test(NAME intersection_concurrency COMMAND test_intersection_concurrency)
