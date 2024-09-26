@@ -38,6 +38,7 @@ private:
 
     std::shared_ptr<MessageQueue<TrafficLightPhase>> _message_queue;
     WorkerState _workerState;
+    std::atomic<bool> _simulationStarted{false};
 };
 
 #endif

@@ -46,6 +46,13 @@ TrafficLightPhase TrafficLight::getCurrentPhase()
 
 void TrafficLight::simulate()
 {
+    if (!_workerState.is_running())
+        return;
+
+    bool expected = false;
+    if (!_simulationStarted.compare_exchange_strong(expected, true))
+        return;
+
     threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 }
 
